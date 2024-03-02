@@ -9,6 +9,8 @@ import admin from "firebase-admin";
 import serviceAccountKey from "./projeksainsdata-2b30f-firebase-adminsdk-do07o-bf71fd0a5b.json" assert { type: "json" };
 import { getAuth } from "firebase-admin/auth";
 import aws from "aws-sdk";
+import { Conversation } from 'gpt-turbo';
+
 
 // schema below
 import User from './Schema/User.js';
@@ -96,6 +98,8 @@ const generateUsername = async (email) => {
     return username;
 
 }
+
+
 
 // upload image url route
 server.get('/get-upload-url', (req, res) => {
@@ -967,6 +971,26 @@ server.post("/delete-blog", verifyJWT, (req, res) => {
 
 })
 
+import bodyParser from 'body-parser';
+import { getStreamingCompletion } from "./src/modules/openai/index.js";
+
+server.use(bodyParser.json());
+server.use(cors());
+server.use(bodyParser.urlencoded({ extended: false }));
+
+
+server.post("/chat", async (req, res) => {
+    const data = req.body;
+    const stream = await getStreamingCompletion({ userPrompt: data?.userPrompt });
+    for await (const part of stream) {
+      // Uncomment below if you want to check chunk time generation
+      // const chunkTime = (Date.now() - starttime) / 1000;
+      // process.stdout.write(part.choices[0]?.delta || "");
+      // console.log("chunk time:", chunkTime);
+      res.write(part.choices[0]?.delta.content || "");
+    }
+    res.end();
+  });
 
 server.listen(PORT, () => {
     console.log('listening on port -> ' + PORT);
