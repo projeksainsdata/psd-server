@@ -993,16 +993,6 @@ server.post("/chat", async (req, res) => {
     res.end();
   });
 
-server.get("/members", (req, res) => {
-    User.find({})
-        .select("-personal_info.password")
-        .then(users => {
-            res.status(200).json(users);
-        })
-        .catch(err => {
-            res.status(500).json({ error: err.message });
-        });
-});
 
 
 server.listen(PORT, () => {

@@ -12,7 +12,7 @@ const systemMessage = {
 
 export const getStreamingCompletion = async ({ userPrompt }) => {
   return client.chat.completions.create({
-    model: "gpt-3.5-turbo",
+    model: "gpt-4",
     messages: [systemMessage, { role: "user", content: userPrompt }],
     stream: true,
   });
