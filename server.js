@@ -985,9 +985,9 @@ server.post("/chat", async (req, res) => {
     const stream = await getStreamingCompletion({ userPrompt: data?.userPrompt });
     for await (const part of stream) {
       // Uncomment below if you want to check chunk time generation
-      const chunkTime = (Date.now() - starttime) / 1000;
-      process.stdout.write(part.choices[0]?.delta || "");
-      console.log("chunk time:", chunkTime);
+      //const chunkTime = (Date.now() - starttime) / 1000;
+      //process.stdout.write(part.choices[0]?.delta || "");
+      //console.log("chunk time:", chunkTime);
       res.write(part.choices[0]?.delta.content || "");
     }
     res.end();
