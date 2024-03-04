@@ -18,6 +18,7 @@ import Blog from './Schema/Blog.js';
 import Notification from "./Schema/Notification.js";
 import Comment from "./Schema/Comment.js";
 import ToDo from './Schema/ToDo.js';
+import Notepad from './Schema/Notepad.js';
 
 const server = express();
 let PORT = 3000;
@@ -1025,7 +1026,30 @@ server.put("/todo/complete/:id", async (req, res) => {
     }
 });
 
-
+server.get("/note", async (req, res) => {
+    try {
+      const note = await Notepad.findOne({});
+      res.json(note);
+    } catch (error) {
+      res.status(500).json({ message: "Error fetching note" });
+    }
+  });
+  
+server.put("/note", async (req, res) => {
+    try {
+      const { content } = req.body;
+      let note = await Notepad.findOne({});
+      if (!note) {
+        note = new Notepad({ content });
+      } else {
+        note.content = content;
+      }
+      await note.save();
+      res.json(note);
+    } catch (error) {
+      res.status(500).json({ message: "Error updating note" });
+    }
+});
 
 server.listen(PORT, () => {
     console.log('listening on port -> ' + PORT);
