@@ -9,7 +9,7 @@ import admin from "firebase-admin";
 import serviceAccountKey from "./projeksainsdata-2b30f-firebase-adminsdk-do07o-bf71fd0a5b.json" assert { type: "json" };
 import { getAuth } from "firebase-admin/auth";
 import aws from "aws-sdk";
-import { Conversation } from 'gpt-turbo';
+
 
 
 // schema below
@@ -17,6 +17,7 @@ import User from './Schema/User.js';
 import Blog from './Schema/Blog.js';
 import Notification from "./Schema/Notification.js";
 import Comment from "./Schema/Comment.js";
+import ToDo from './Schema/ToDo.js';
 
 const server = express();
 let PORT = 3000;
@@ -992,6 +993,22 @@ server.post("/chat", async (req, res) => {
     }
     res.end();
   });
+
+server.get('/todo', async(req,res)=> {
+    const todos = await ToDo.find();
+    res.json(todos)
+})
+
+server.post('/todo/new', async(req,res)=> {
+    const task = await ToDo.create(req.body)
+    res.status(201).json({task})
+})
+
+server.delete('/todo/delete/:id', async(req,res)=>{
+    const result = await ToDo.findByIdAndDelete(req.params.id)
+    res.json(result)
+})
+
 
 
 
