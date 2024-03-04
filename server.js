@@ -1009,6 +1009,21 @@ server.delete('/todo/delete/:id', async(req,res)=>{
     res.json(result)
 })
 
+server.put("/todo/complete/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+        const todo = await ToDo.findById(id);
+        if (!todo) {
+            return res.status(404).json({ message: "Todo not found" });
+        }
+        todo.completed = !todo.completed;
+        const updatedTodo = await todo.save();
+        res.json(updatedTodo);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to toggle completion status" });
+    }
+});
 
 
 
