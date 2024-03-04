@@ -84,7 +84,15 @@ const userSchema = mongoose.Schema({
         type: [ Schema.Types.ObjectId ],
         ref: 'blogs',
         default: [],
-    }
+    },
+    notepad: {
+        type: Schema.Types.ObjectId,
+        ref: 'notepad',
+    },
+    todos: [{ // New field for referencing Todo documents
+        type: Schema.Types.ObjectId,
+        ref: 'Todo',
+    }]
 
 }, 
 { 

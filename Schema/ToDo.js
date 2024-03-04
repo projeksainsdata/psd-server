@@ -1,7 +1,10 @@
 import mongoose, { Schema } from "mongoose";
 
 const ToDoSchema = new mongoose.Schema({
-    name: String,
+    name: {
+        type: String,
+        required: true
+      },
     completed: {
         type: Boolean,
         default: false

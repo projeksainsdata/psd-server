@@ -995,25 +995,65 @@ server.post("/chat", async (req, res) => {
     res.end();
   });
 
-server.get('/todo', async(req,res)=> {
-    const todos = await ToDo.find();
-    res.json(todos)
-})
 
-server.post('/todo/new', async(req,res)=> {
-    const task = await ToDo.create(req.body)
-    res.status(201).json({task})
-})
-
-server.delete('/todo/delete/:id', async(req,res)=>{
-    const result = await ToDo.findByIdAndDelete(req.params.id)
-    res.json(result)
-})
-
-server.put("/todo/complete/:id", async (req, res) => {
+// Fetch todos for a specific user
+server.get('/todo/user/:username', async (req, res) => {
     try {
-        const { id } = req.params;
-        const todo = await ToDo.findById(id);
+        const user = await User.findOne({ 'personal_info.username': req.params.username });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        const todos = await ToDo.find({ _id: { $in: user.todos } });
+        res.json({ todos });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to fetch todos' });
+    }
+});
+
+// Add a new todo for a specific user
+server.post('/todo/user/:username/new', async (req, res) => {
+    try {
+        const user = await User.findOne({ 'personal_info.username': req.params.username });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        const newTodo = new ToDo(req.body);
+        await newTodo.save();
+        user.todos.push(newTodo._id);
+        await user.save();
+        res.status(201).json({ newTodo });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to create new todo' });
+    }
+});
+
+// Delete a todo for a specific user
+server.delete('/todo/user/:username/delete/:id', async (req, res) => {
+    try {
+        const user = await User.findOne({ 'personal_info.username': req.params.username });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        const result = await ToDo.findByIdAndDelete(req.params.id);
+        user.todos = user.todos.filter(todoId => todoId.toString() !== req.params.id);
+        await user.save();
+        res.json(result);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to delete todo' });
+    }
+});
+
+// Toggle completion status of a todo for a specific user
+server.put("/todo/user/:username/complete/:id", async (req, res) => {
+    try {
+        const user = await User.findOne({ 'personal_info.username': req.params.username });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        const todo = await ToDo.findById(req.params.id);
         if (!todo) {
             return res.status(404).json({ message: "Todo not found" });
         }
@@ -1026,30 +1066,42 @@ server.put("/todo/complete/:id", async (req, res) => {
     }
 });
 
-server.get("/todo/note", async (req, res) => {
+server.get("/todo/:username/note", async (req, res) => {
     try {
-      const note = await Notepad.findOne({});
-      res.json(note);
+        const username = req.params.username;
+        const user = await User.findOne({ 'personal_info.username': username });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        const note = await Notepad.findById(user.notepad);
+        res.json(note);
     } catch (error) {
-      res.status(500).json({ message: "Error fetching note" });
-    }
-  });
-  
-server.put("/todo/note", async (req, res) => {
-    try {
-      const { content } = req.body;
-      let note = await Notepad.findOne({});
-      if (!note) {
-        note = new Notepad({ content });
-      } else {
-        note.content = content;
-      }
-      await note.save();
-      res.json(note);
-    } catch (error) {
-      res.status(500).json({ message: "Error updating note" });
+        res.status(500).json({ message: "Error fetching note" });
     }
 });
+
+server.put("/todo/:username/note", async (req, res) => {
+    try {
+        const username = req.params.username;
+        const user = await User.findOne({ 'personal_info.username': username });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        let note = await Notepad.findById(user.notepad);
+        if (!note) {
+            note = new Notepad({ content: req.body.content });
+            user.notepad = note._id;
+            await user.save();
+        } else {
+            note.content = req.body.content;
+        }
+        await note.save();
+        res.json(note);
+    } catch (error) {
+        res.status(500).json({ message: "Error updating note" });
+    }
+});
+
 
 server.listen(PORT, () => {
     console.log('listening on port -> ' + PORT);
