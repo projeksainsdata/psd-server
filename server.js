@@ -1026,7 +1026,7 @@ server.put("/todo/complete/:id", async (req, res) => {
     }
 });
 
-server.get("/note", async (req, res) => {
+server.get("/todo/note", async (req, res) => {
     try {
       const note = await Notepad.findOne({});
       res.json(note);
@@ -1035,7 +1035,7 @@ server.get("/note", async (req, res) => {
     }
   });
   
-server.put("/note", async (req, res) => {
+server.put("/todo/note", async (req, res) => {
     try {
       const { content } = req.body;
       let note = await Notepad.findOne({});
