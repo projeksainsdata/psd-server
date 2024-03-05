@@ -1102,6 +1102,26 @@ server.put("/todo/:username/note", async (req, res) => {
     }
 });
 
+// Delete a user and their associated data
+server.delete('/delete-user', verifyJWT, async (req, res) => {
+    try {
+        const userId = req.user;
+
+        // Delete the user's blogs, comments, and notifications
+        await Blog.deleteMany({ author: userId });
+        await Comment.deleteMany({ commented_by: userId });
+        await Notification.deleteMany({ $or: [{ user: userId }, { notification_for: userId }] });
+
+        // Delete the user
+        await User.findByIdAndDelete(userId);
+
+        res.status(200).json({ message: 'User and associated data deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to delete user' });
+    }
+});
+
 
 server.listen(PORT, () => {
     console.log('listening on port -> ' + PORT);
