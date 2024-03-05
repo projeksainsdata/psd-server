@@ -1102,25 +1102,30 @@ server.put("/todo/:username/note", async (req, res) => {
     }
 });
 
-// Delete a user and their associated data
-server.delete('/delete-user', verifyJWT, async (req, res) => {
+// Assuming 'User' is your Mongoose model for users
+server.delete('/delete-user/:username', async (req, res) => {
     try {
-        const userId = req.user;
+        const username = req.params.username;
+        const user = await User.findOneAndDelete({ "personal_info.username": username });
 
-        // Delete the user's blogs, comments, and notifications
-        await Blog.deleteMany({ author: userId });
-        await Comment.deleteMany({ commented_by: userId });
-        await Notification.deleteMany({ $or: [{ user: userId }, { notification_for: userId }] });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
 
-        // Delete the user
-        await User.findByIdAndDelete(userId);
+        // Additional deletion logic for user's data (blogs, comments, etc.) goes here
+                // Delete the user's blogs, comments, and notifications
+        await Blog.deleteMany({ author: result._id });
+        await Comment.deleteMany({ commented_by: result._id });
+        await Notification.deleteMany({ $or: [{ user: result._id }, { notification_for: result._id }] });
 
-        res.status(200).json({ message: 'User and associated data deleted successfully' });
+        res.status(200).json({ message: 'User deleted successfully' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Failed to delete user' });
     }
 });
+
+
 
 
 server.listen(PORT, () => {
