@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const followSchema = new mongoose.Schema({
     follower: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // Asumsi bahwa nama model pengguna adalah 'User'
+        ref: 'User', // Pastikan ini sesuai dengan nama model pengguna Anda
         required: true,
     },
     following: {
@@ -12,9 +12,7 @@ const followSchema = new mongoose.Schema({
         required: true,
     }
 }, {
-    timestamps: true // Menyertakan tanggal pembuatan dan pembaruan
+    timestamps: true // Menambahkan cap waktu untuk tanggal pembuatan dan pembaruan
 });
 
-const Follow = mongoose.model('Follow', followSchema);
-
-export default Follow;
+export default mongoose.model('Follow', followSchema);

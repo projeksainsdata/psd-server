@@ -102,8 +102,6 @@ const generateUsername = async (email) => {
 
 }
 
-
-
 // upload image url route
 server.get('/get-upload-url', (req, res) => {
     generateUploadURL().then(url => res.status(200).json({ uploadURL: url }))
@@ -246,7 +244,6 @@ server.post("/google-auth", async (req, res) => {
     })
 
 })
-
 
 server.post("/change-password", verifyJWT, (req, res) => {
 
@@ -1154,8 +1151,8 @@ server.post('/follow', async (req, res) => {
         await newFollow.save();
 
         // Mengupdate jumlah follower dan following
-        await User.findByIdAndUpdate(followerId, { $inc: { 'account_info.following_count': 1 } });
-        await User.findByIdAndUpdate(followingId, { $inc: { 'account_info.followers_count': 1 } });
+        await User.findByIdAndUpdate(followerId, { $inc: { 'following_count': 1 } });
+        await User.findByIdAndUpdate(followingId, { $inc: { 'followers_count': 1 } });
 
         res.status(201).json({ message: 'Followed successfully' });
     } catch (error) {
@@ -1176,8 +1173,8 @@ server.post('/unfollow', async (req, res) => {
         }
 
         // Mengupdate jumlah follower dan following
-        await User.findByIdAndUpdate(followerId, { $inc: { 'account_info.following_count': -1 } });
-        await User.findByIdAndUpdate(followingId, { $inc: { 'account_info.followers_count': -1 } });
+        await User.findByIdAndUpdate(followerId, { $inc: { 'following_count': -1 } });
+        await User.findByIdAndUpdate(followingId, { $inc: { 'followers_count': -1 } });
 
         res.status(200).json({ message: 'Unfollowed successfully' });
     } catch (error) {
@@ -1185,6 +1182,9 @@ server.post('/unfollow', async (req, res) => {
         res.status(500).json({ message: 'Failed to unfollow user' });
     }
 });
+
+
+
 
 
 

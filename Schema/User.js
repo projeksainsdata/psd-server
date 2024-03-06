@@ -3,7 +3,8 @@ import mongoose, { Schema } from "mongoose";
 let profile_imgs_name_list = ["Garfield", "Tinkerbell", "Annie", "Loki", "Cleo", "Angel", "Bob", "Mia", "Coco", "Gracie", "Bear", "Bella", "Abby", "Harley", "Cali", "Leo", "Luna", "Jack", "Felix", "Kiki"];
 let profile_imgs_collections_list = ["notionists-neutral", "adventurer-neutral", "fun-emoji"];
 
-const userSchema = new mongoose.Schema({
+const userSchema = mongoose.Schema({
+
     personal_info: {
         fullname: {
             type: String,
@@ -31,7 +32,7 @@ const userSchema = new mongoose.Schema({
         profile_img: {
             type: String,
             default: () => {
-                return `https://api.dicebear.com/6.x/${profile_imgs_collections_list[Math.floor(Math.random() * profile_imgs_collections_list.length)]}/svg?seed=${profile_imgs_name_list[Math.floor(Math.random() * profile_imgs_name_list.length)]}`;
+                return `https://api.dicebear.com/6.x/${profile_imgs_collections_list[Math.floor(Math.random() * profile_imgs_collections_list.length)]}/svg?seed=${profile_imgs_name_list[Math.floor(Math.random() * profile_imgs_name_list.length)]}`
             } 
         },
         isAdmin: {
@@ -65,7 +66,7 @@ const userSchema = new mongoose.Schema({
             default: "",
         }
     },
-    account_info: {
+    account_info:{
         total_posts: {
             type: Number,
             default: 0
@@ -74,29 +75,21 @@ const userSchema = new mongoose.Schema({
             type: Number,
             default: 0
         },
-        followers_count: {
-            type: Number,
-            default: 0
-        },
-        following_count: {
-            type: Number,
-            default: 0
-        }
     },
     google_auth: {
         type: Boolean,
         default: false
     },
     blogs: {
-        type: [Schema.Types.ObjectId],
-        ref: 'Blog',
+        type: [ Schema.Types.ObjectId ],
+        ref: 'blogs',
         default: [],
     },
     notepad: {
         type: Schema.Types.ObjectId,
-        ref: 'Notepad',
+        ref: 'notepad',
     },
-    todos: [{
+    todos: [{ // New field for referencing Todo documents
         type: Schema.Types.ObjectId,
         ref: 'Todo',
     }],
@@ -108,11 +101,13 @@ const userSchema = new mongoose.Schema({
         type: Schema.Types.ObjectId,
         ref: 'User'
     }]
+
 }, 
 { 
     timestamps: {
         createdAt: 'joinedAt'
     } 
-});
 
-export default mongoose.model("User", userSchema);
+})
+
+export default mongoose.model("users", userSchema);
