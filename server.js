@@ -1132,57 +1132,57 @@ server.delete('/delete-user/:username', verifyJWT, async (req, res) => {
     }
 });
 
-// Endpoint untuk follow user
-server.post('/follow', async (req, res) => {
-    const { followerId, followingId } = req.body;
+server.post('/follow', verifyJWT, async (req, res) => {
+    const userId = req.user; // Assuming req.user is the ID of the current user
+    const { followId } = req.body; // ID of the user to follow
 
     try {
-        // Mengecek apakah sudah ada hubungan follow
-        const existingFollow = await Follow.findOne({ follower: followerId, following: followingId });
-        if (existingFollow) {
-            return res.status(400).json({ message: 'Already following this user' });
-        }
+        await User.findByIdAndUpdate(userId, { $addToSet: { following: followId } });
+        await User.findByIdAndUpdate(followId, { $addToSet: { followers: userId } });
 
-        // Membuat hubungan follow baru
-        const newFollow = new Follow({
-            follower: followerId,
-            following: followingId,
-        });
-        await newFollow.save();
-
-        // Mengupdate jumlah follower dan following
-        await User.findByIdAndUpdate(followerId, { $inc: { 'following_count': 1 } });
-        await User.findByIdAndUpdate(followingId, { $inc: { 'followers_count': 1 } });
-
-        res.status(201).json({ message: 'Followed successfully' });
+        res.status(200).json({ message: 'Followed successfully' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Failed to follow user' });
+        res.status(500).json({ message: 'Failed to follow user', error: error.message });
     }
 });
 
-// Endpoint untuk unfollow user
-server.post('/unfollow', async (req, res) => {
-    const { followerId, followingId } = req.body;
+server.post('/unfollow', verifyJWT, async (req, res) => {
+    const userId = req.user; // Assuming req.user is the ID of the current user
+    const { unfollowId } = req.body; // ID of the user to unfollow
 
     try {
-        // Mengecek apakah ada hubungan follow
-        const existingFollow = await Follow.findOneAndDelete({ follower: followerId, following: followingId });
-        if (!existingFollow) {
-            return res.status(400).json({ message: 'Not following this user' });
-        }
-
-        // Mengupdate jumlah follower dan following
-        await User.findByIdAndUpdate(followerId, { $inc: { 'following_count': -1 } });
-        await User.findByIdAndUpdate(followingId, { $inc: { 'followers_count': -1 } });
+        await User.findByIdAndUpdate(userId, { $pull: { following: unfollowId } });
+        await User.findByIdAndUpdate(unfollowId, { $pull: { followers: userId } });
 
         res.status(200).json({ message: 'Unfollowed successfully' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Failed to unfollow user' });
+        res.status(500).json({ message: 'Failed to unfollow user', error: error.message });
     }
 });
 
+
+
+server.get('/followers/:userId', async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+        const user = await User.findById(userId).populate('followers', 'personal_info.username');
+        res.status(200).json({ followers: user.followers });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to get followers', error: error.message });
+    }
+});
+
+server.get('/following/:userId', async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+        const user = await User.findById(userId).populate('following', 'personal_info.username');
+        res.status(200).json({ following: user.following });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to get following', error: error.message });
+    }
+});
 
 
 

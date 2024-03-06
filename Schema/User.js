@@ -4,7 +4,6 @@ let profile_imgs_name_list = ["Garfield", "Tinkerbell", "Annie", "Loki", "Cleo",
 let profile_imgs_collections_list = ["notionists-neutral", "adventurer-neutral", "fun-emoji"];
 
 const userSchema = mongoose.Schema({
-
     personal_info: {
         fullname: {
             type: String,
@@ -89,25 +88,23 @@ const userSchema = mongoose.Schema({
         type: Schema.Types.ObjectId,
         ref: 'notepad',
     },
-    todos: [{ // New field for referencing Todo documents
+    todos: [{ 
         type: Schema.Types.ObjectId,
         ref: 'Todo',
     }],
     following: [{
         type: Schema.Types.ObjectId,
-        ref: 'User'
+        ref: 'Follow'
     }],
     followers: [{
         type: Schema.Types.ObjectId,
-        ref: 'User'
+        ref: 'Follow'
     }]
-
 }, 
 { 
     timestamps: {
         createdAt: 'joinedAt'
     } 
-
-})
+});
 
 export default mongoose.model("users", userSchema);
