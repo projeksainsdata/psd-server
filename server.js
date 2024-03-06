@@ -19,6 +19,7 @@ import Notification from "./Schema/Notification.js";
 import Comment from "./Schema/Comment.js";
 import ToDo from './Schema/ToDo.js';
 import Notepad from './Schema/Notepad.js';
+import Follow from './Schema/Follow.js';
 
 const server = express();
 let PORT = 3000;
@@ -1131,6 +1132,57 @@ server.delete('/delete-user/:username', verifyJWT, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Failed to delete user' });
+    }
+});
+
+// Endpoint untuk follow user
+server.post('/follow', async (req, res) => {
+    const { followerId, followingId } = req.body;
+
+    try {
+        // Mengecek apakah sudah ada hubungan follow
+        const existingFollow = await Follow.findOne({ follower: followerId, following: followingId });
+        if (existingFollow) {
+            return res.status(400).json({ message: 'Already following this user' });
+        }
+
+        // Membuat hubungan follow baru
+        const newFollow = new Follow({
+            follower: followerId,
+            following: followingId,
+        });
+        await newFollow.save();
+
+        // Mengupdate jumlah follower dan following
+        await User.findByIdAndUpdate(followerId, { $inc: { 'account_info.following_count': 1 } });
+        await User.findByIdAndUpdate(followingId, { $inc: { 'account_info.followers_count': 1 } });
+
+        res.status(201).json({ message: 'Followed successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to follow user' });
+    }
+});
+
+// Endpoint untuk unfollow user
+server.post('/unfollow', async (req, res) => {
+    const { followerId, followingId } = req.body;
+
+    try {
+        // Mengecek apakah ada hubungan follow
+        const existingFollow = await Follow.findOneAndDelete({ follower: followerId, following: followingId });
+        if (!existingFollow) {
+            return res.status(400).json({ message: 'Not following this user' });
+        }
+
+        // Mengupdate jumlah follower dan following
+        await User.findByIdAndUpdate(followerId, { $inc: { 'account_info.following_count': -1 } });
+        await User.findByIdAndUpdate(followingId, { $inc: { 'account_info.followers_count': -1 } });
+
+        res.status(200).json({ message: 'Unfollowed successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to unfollow user' });
     }
 });
 
