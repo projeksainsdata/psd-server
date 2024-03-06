@@ -1102,6 +1102,39 @@ server.put("/todo/:username/note", async (req, res) => {
     }
 });
 
+server.delete('/delete-user/:username', verifyJWT, async (req, res) => {
+    try {
+        const username = req.params.username;
+        const user = await User.findOne({ "personal_info.username": username });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (user.google_auth) {
+            // Handle the deletion of a user who signed up with Google
+            // For example, you might need to revoke tokens, send a notification, etc.
+            // Add your custom logic here
+            // Example: Revoke Google tokens
+            await revokeGoogleTokens(user.google_token);
+        } else {
+            // Handle the deletion of a regular user
+            await User.findByIdAndDelete(user._id);
+
+            // Delete associated blogs, comments, and notifications
+            await Blog.deleteMany({ author: user._id });
+            await Comment.deleteMany({ commented_by: user._id });
+            await Notification.deleteMany({ $or: [{ user: user._id }, { notification_for: user._id }] });
+        }
+
+        res.status(200).json({ message: 'User deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to delete user' });
+    }
+});
+
+
 
 server.listen(PORT, () => {
     console.log('listening on port -> ' + PORT);

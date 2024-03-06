@@ -7,14 +7,15 @@ const client = new OpenAI({
 const systemMessage = {
   role: "system",
   content:
-    "Tanya di PSD-GPT",
+    "Tanya di ProjekSainsData-GPT",
 };
 
 export const getStreamingCompletion = async ({ userPrompt }) => {
   return client.chat.completions.create({
-    model: "gpt-3.5-turbo",
+    model: "gpt-4-turbo-preview",
     messages: [systemMessage, { role: "user", content: userPrompt }],
     stream: true,
     temperature: 0.7
   });
 };
+
