@@ -94,11 +94,11 @@ const userSchema = mongoose.Schema({
     }],
     following: [{
         type: Schema.Types.ObjectId,
-        ref: 'Follow'
+        ref: 'User'
     }],
     followers: [{
         type: Schema.Types.ObjectId,
-        ref: 'Follow'
+        ref: 'User'
     }]
 }, 
 { 

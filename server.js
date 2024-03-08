@@ -991,7 +991,7 @@ server.post("/chat", async (req, res) => {
       res.write(part.choices[0]?.delta.content || "");
     }
     res.end();
-  });
+});
 
 
 // Fetch todos for a specific user
