@@ -1169,8 +1169,14 @@ server.get('/followers/:userId', async (req, res) => {
     const { userId } = req.params;
 
     try {
-        const user = await User.findById(userId).populate('followers', 'personal_info.username');
-        res.status(200).json({ followers: user.followers });
+        const user = await User.findById(userId).populate({
+            path: 'followers',
+            select: 'personal_info.username'
+        });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json(user.followers);
     } catch (error) {
         res.status(500).json({ message: 'Failed to get followers', error: error.message });
     }
@@ -1180,12 +1186,19 @@ server.get('/following/:userId', async (req, res) => {
     const { userId } = req.params;
 
     try {
-        const user = await User.findById(userId).populate('following', 'personal_info.username');
-        res.status(200).json({ following: user.following });
+        const user = await User.findById(userId).populate({
+            path: 'following',
+            select: 'personal_info.username'
+        });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json(user.following);
     } catch (error) {
         res.status(500).json({ message: 'Failed to get following', error: error.message });
     }
 });
+
 
 
 
