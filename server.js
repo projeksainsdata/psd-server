@@ -1100,10 +1100,12 @@ server.put("/todo/:username/note", async (req, res) => {
     }
 });
 
-server.delete('/delete-user/:username', verifyJWT, async (req, res) => {
+
+
+server.delete('/delete-user/:id', verifyJWT, async (req, res) => {
     try {
-        const username = req.params.username;
-        const user = await User.findOne({ "personal_info.username": username });
+        const userId = req.params.id;
+        const user = await User.findById(userId);
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
@@ -1117,12 +1119,12 @@ server.delete('/delete-user/:username', verifyJWT, async (req, res) => {
             await revokeGoogleTokens(user.google_token);
         } else {
             // Handle the deletion of a regular user
-            await User.findByIdAndDelete(user._id);
+            await User.findByIdAndDelete(userId);
 
             // Delete associated blogs, comments, and notifications
-            await Blog.deleteMany({ author: user._id });
-            await Comment.deleteMany({ commented_by: user._id });
-            await Notification.deleteMany({ $or: [{ user: user._id }, { notification_for: user._id }] });
+            await Blog.deleteMany({ author: userId });
+            await Comment.deleteMany({ commented_by: userId });
+            await Notification.deleteMany({ $or: [{ user: userId }, { notification_for: userId }] });
         }
 
         res.status(200).json({ message: 'User deleted successfully' });
@@ -1131,6 +1133,7 @@ server.delete('/delete-user/:username', verifyJWT, async (req, res) => {
         res.status(500).json({ message: 'Failed to delete user' });
     }
 });
+
 
 server.post('/follow', verifyJWT, async (req, res) => {
     const userId = req.user; // Assuming req.user is the ID of the current user
@@ -1183,6 +1186,7 @@ server.get('/following/:userId', async (req, res) => {
         res.status(500).json({ message: 'Failed to get following', error: error.message });
     }
 });
+
 
 
 
