@@ -9,8 +9,6 @@ import admin from "firebase-admin";
 import serviceAccountKey from "./projeksainsdata-2b30f-firebase-adminsdk-do07o-bf71fd0a5b.json" assert { type: "json" };
 import { getAuth } from "firebase-admin/auth";
 import aws from "aws-sdk";
-import OpenAI from 'openai';
-import fetch from 'node-fetch';
 
 
 
@@ -23,6 +21,7 @@ import Comment from "./Schema/Comment.js";
 import ToDo from './Schema/ToDo.js';
 import Notepad from './Schema/Notepad.js';
 import Follow from './Schema/Follow.js';
+import Chat from './Schema/Chatai.js';
 
 const server = express();
 let PORT = 3000;
@@ -61,6 +60,22 @@ const generateUploadURL = async () => {
     })
 
 }
+
+const uploadPdfToS3 = async (pdfBuffer) => {
+    const pdfName = `${nanoid()}-${Date.now()}.pdf`;
+
+    const params = {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: pdfName,
+        Body: pdfBuffer,
+        ContentType: 'application/pdf'
+    };
+
+    await s3.upload(params).promise();
+
+    return `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_BUCKET_REGION}.amazonaws.com/${pdfName}`;
+};
+
 
 const verifyJWT = (req, res, next) => {
 
@@ -1201,64 +1216,7 @@ server.get('/following/:userId', async (req, res) => {
         res.status(500).json({ message: 'Failed to get following', error: error.message });
     }
 });
-
-import multer from 'multer';
-
-const upload = multer({ dest: 'uploads/' });
-// Files will be saved in the 'uploads' directory
-
-server.post('/upload-pdf', upload.single('pdf'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ error: 'Please upload a PDF file.' });
-    }
-
-    // Generate a URL for the uploaded file
-    // For simplicity, we're using the file path in this example.
-    // In a real application, you might want to store the file in a cloud storage
-    // and return a URL to access the file.
-    const fileUrl = `${req.protocol}://${req.get('host')}/${req.file.path}`;
-
-    res.json({ message: 'PDF uploaded successfully', url: fileUrl });
-});
-
-server.use(express.static('uploads'));
-
-
-const client = new OpenAI({
-    apiKey: process.env.REACT_APP_OPENAI_API_KEY,
-  });
-
-server.post('/chat-pdf', async (req, res) => {
-    const { message, pdfUrl } = req.body;
-
-    if (!pdfUrl) {
-        return res.status(400).json({ error: 'Please provide a PDF URL.' });
-    }
-
-    try {
-        const response = await fetch(pdfUrl);
-        const buffer = await response.buffer();
-        const pdfData = await pdfParse(buffer);
-        const pdfText = pdfData.text;
-
-        // Use OpenAI API to generate an answer based on the PDF text and the user's message
-        const completion = await openai.completions.create({
-            engine: 'gpt-4-turbo-preview',
-            prompt: `${pdfText}\n\nQ: ${message}\nA:`,
-            max_tokens: 150,
-            temperature: 0.7,
-            n: 1,
-            stop: ['\n', 'Q:', 'A:'],
-        });
-
-        const answer = completion.data.choices[0].text.trim();
-
-        res.status(200).json({ answer: answer });
-    } catch (error) {
-        console.error('Error processing PDF:', error);
-        res.status(500).json({ error: 'Error processing PDF' });
-    }
-});
+  
 
 
 server.listen(PORT, () => {

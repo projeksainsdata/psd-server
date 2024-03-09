@@ -20,14 +20,19 @@
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "firebase-admin": "^11.10.1",
+    "fs": "^0.0.1-security",
     "gpt-turbo": "^5.0.1",
     "jsonwebtoken": "^9.0.1",
+    "modelfusion": "^0.137.0",
     "mongoose": "^7.3.2",
     "multer": "^1.4.5-lts.1",
     "nanoid": "^4.0.2",
     "node-fetch": "^3.3.2",
     "openai": "^4.28.4",
-    "pdf-parser": "^1.0.5"
+    "pdf-parse": "^1.1.1",
+    "pdf-parser": "^1.0.5",
+    "pdfjs-dist": "^4.0.379",
+    "pdfkit": "^0.14.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
