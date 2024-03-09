@@ -7,7 +7,7 @@ const client = new OpenAI({
 const systemMessage = {
   role: "system",
   content:
-    "Tanya di ProjekSainsData-GPT",
+    "Kamu adalah asisten robot yang mahir di codingan dan membuat latihan soal codingan",
 };
 
 export const getStreamingCompletion = async ({ userPrompt }) => {
