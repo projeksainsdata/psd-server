@@ -3,7 +3,7 @@ import mongoose, { Schema } from "mongoose";
 let profile_imgs_name_list = ["Garfield", "Tinkerbell", "Annie", "Loki", "Cleo", "Angel", "Bob", "Mia", "Coco", "Gracie", "Bear", "Bella", "Abby", "Harley", "Cali", "Leo", "Luna", "Jack", "Felix", "Kiki"];
 let profile_imgs_collections_list = ["notionists-neutral", "adventurer-neutral", "fun-emoji"];
 
-const userSchema = mongoose.Schema({
+const userSchema = new mongoose.Schema({
     personal_info: {
         fullname: {
             type: String,
@@ -88,19 +88,17 @@ const userSchema = mongoose.Schema({
         type: Schema.Types.ObjectId,
         ref: 'notepad',
     },
+    isVerified: {
+        type: Boolean,
+        default: false,
+    },
     todos: [{ 
         type: Schema.Types.ObjectId,
         ref: 'Todo',
     }],
-    following: [{
-        type: Schema.Types.ObjectId,
-        ref: 'User'
-    }],
-    followers: [{
-        type: Schema.Types.ObjectId,
-        ref: 'User'
-    }]
-}, 
+    followers:[{type:Schema.Types.ObjectId,ref:"user"}],
+    following:[{type:Schema.Types.ObjectId,ref:"user"}]
+},
 { 
     timestamps: {
         createdAt: 'joinedAt'

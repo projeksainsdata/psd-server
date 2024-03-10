@@ -22,6 +22,8 @@ import ToDo from './Schema/ToDo.js';
 import Notepad from './Schema/Notepad.js';
 import Follow from './Schema/Follow.js';
 import Chat from './Schema/Chatai.js';
+import TopicCount from './Schema/TopicCount.js';
+import Game from './Schema/Game.js';
 
 const server = express();
 let PORT = 3000;
@@ -1152,71 +1154,93 @@ server.delete('/delete-user/:id', verifyJWT, async (req, res) => {
     }
 });
 
-
-server.post('/follow', verifyJWT, async (req, res) => {
-    const userId = req.user; // Assuming req.user is the ID of the current user
-    const { followId } = req.body; // ID of the user to follow
+// Follow a user
+server.post('/user/:userId/follow', async (req, res) => {
+    const { userId } = req.params;
+    const { followerId } = req.body;
 
     try {
-        await User.findByIdAndUpdate(userId, { $addToSet: { following: followId } });
-        await User.findByIdAndUpdate(followId, { $addToSet: { followers: userId } });
+        // Add followerId to the following list of the user
+        await User.findByIdAndUpdate(userId, {
+            $addToSet: { following: followerId }
+        });
 
-        res.status(200).json({ message: 'Followed successfully' });
+        // Add userId to the followers list of the followed user
+        await User.findByIdAndUpdate(followerId, {
+            $addToSet: { followers: userId }
+        });
+
+        // Send a notification to the followed user (implement this according to your notification system)
+
+        res.status(200).send('Followed successfully');
     } catch (error) {
-        res.status(500).json({ message: 'Failed to follow user', error: error.message });
+        console.error('Error following user:', error);
+        res.status(500).send('Error following user');
     }
 });
 
-server.post('/unfollow', verifyJWT, async (req, res) => {
-    const userId = req.user; // Assuming req.user is the ID of the current user
-    const { unfollowId } = req.body; // ID of the user to unfollow
+// Unfollow a user
+server.post('/user/:userId/unfollow', async (req, res) => {
+    const { userId } = req.params;
+    const { followerId } = req.body;
 
     try {
-        await User.findByIdAndUpdate(userId, { $pull: { following: unfollowId } });
-        await User.findByIdAndUpdate(unfollowId, { $pull: { followers: userId } });
+        // Remove followerId from the following list of the user
+        await User.findByIdAndUpdate(userId, {
+            $pull: { following: followerId }
+        });
 
-        res.status(200).json({ message: 'Unfollowed successfully' });
+        // Remove userId from the followers list of the unfollowed user
+        await User.findByIdAndUpdate(followerId, {
+            $pull: { followers: userId }
+        });
+
+        res.status(200).send('Unfollowed successfully');
     } catch (error) {
-        res.status(500).json({ message: 'Failed to unfollow user', error: error.message });
+        console.error('Error unfollowing user:', error);
+        res.status(500).send('Error unfollowing user');
     }
 });
 
-
-
-server.get('/followers/:userId', async (req, res) => {
+// Get followers of a user
+server.get('/user/:userId/followers', async (req, res) => {
     const { userId } = req.params;
 
     try {
-        const user = await User.findById(userId).populate({
-            path: 'followers',
-            select: 'personal_info.username'
+        const user = await User.findById(userId).populate('followers', 'personal_info.username');
+        const followers = user.followers.map(follower => {
+            return {
+                username: follower.personal_info.username,
+                profile_img: follower.personal_info.profile_img
+            };
         });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        res.status(200).json(user.followers);
+        res.json(followers);
     } catch (error) {
-        res.status(500).json({ message: 'Failed to get followers', error: error.message });
+        console.error('Error fetching followers:', error);
+        res.status(500).send('Error fetching followers');
     }
 });
 
-server.get('/following/:userId', async (req, res) => {
+// Get following of a user
+server.get('/user/:userId/following', async (req, res) => {
     const { userId } = req.params;
 
     try {
-        const user = await User.findById(userId).populate({
-            path: 'following',
-            select: 'personal_info.username'
+        const user = await User.findById(userId).populate('following', 'personal_info.username');
+        const following = user.following.map(followed => {
+            return {
+                username: followed.personal_info.username,
+                profile_img: followed.personal_info.profile_img
+            };
         });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        res.status(200).json(user.following);
+        res.json(following);
     } catch (error) {
-        res.status(500).json({ message: 'Failed to get following', error: error.message });
+        console.error('Error fetching following:', error);
+        res.status(500).send('Error fetching following');
     }
 });
-  
+
+
 
 
 server.listen(PORT, () => {
