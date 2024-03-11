@@ -460,9 +460,9 @@ server.post("/update-profile-img", verifyJWT, (req, res) => {
 
 server.post("/update-profile", verifyJWT, (req, res) => {
 
-    let { username, bio, social_links } = req.body;
+    let { username, bio, social_links, fullname } = req.body;
 
-    let bioLimit = 150;
+    let bioLimit = 500;
 
     if(username.length < 3){
         return res.status(403).json({ error: "Username should be at least 3 letters long" });
@@ -494,6 +494,7 @@ server.post("/update-profile", verifyJWT, (req, res) => {
     let updateObj = {
         "personal_info.username": username,
         "personal_info.bio": bio,
+        "personal_info.fullname": fullname,
         social_links
     }
 
@@ -1167,11 +1168,18 @@ server.post("/get-profile2", (req, res) => {
 });
 
 server.post('/follow', async (req, res) => {
-    const { userId, followId } = req.body;
+    const { username, followUsername } = req.body;
 
     try {
-        await User.findByIdAndUpdate(userId, { $addToSet: { following: followId } });
-        await User.findByIdAndUpdate(followId, { $addToSet: { followers: userId } });
+        const user = await User.findOne({ 'personal_info.username': username });
+        const followUser = await User.findOne({ 'personal_info.username': followUsername });
+
+        if (!user || !followUser) {
+            return res.status(404).send({ message: 'User not found' });
+        }
+
+        await User.findByIdAndUpdate(user._id, { $addToSet: { following: followUser._id } });
+        await User.findByIdAndUpdate(followUser._id, { $addToSet: { followers: user._id } });
 
         res.status(200).send({ message: 'Successfully followed' });
     } catch (err) {
@@ -1181,11 +1189,18 @@ server.post('/follow', async (req, res) => {
 
 // Unfollow a user
 server.post('/unfollow', async (req, res) => {
-    const { userId, unfollowId } = req.body;
+    const { username, unfollowUsername } = req.body;
 
     try {
-        await User.findByIdAndUpdate(userId, { $pull: { following: unfollowId } });
-        await User.findByIdAndUpdate(unfollowId, { $pull: { followers: userId } });
+        const user = await User.findOne({ 'personal_info.username': username });
+        const unfollowUser = await User.findOne({ 'personal_info.username': unfollowUsername });
+
+        if (!user || !unfollowUser) {
+            return res.status(404).send({ message: 'User not found' });
+        }
+
+        await User.findByIdAndUpdate(user._id, { $pull: { following: unfollowUser._id } });
+        await User.findByIdAndUpdate(unfollowUser._id, { $pull: { followers: user._id } });
 
         res.status(200).send({ message: 'Successfully unfollowed' });
     } catch (err) {
@@ -1193,10 +1208,11 @@ server.post('/unfollow', async (req, res) => {
     }
 });
 
+
 // Get followers of a user
-server.get('/:userId/followers', async (req, res) => {
+server.get('/followers/:username', async (req, res) => {
     try {
-        const user = await User.findById(req.params.userId).populate({
+        const user = await User.findOne({ 'personal_info.username': req.params.username }).populate({
             path: 'followers',
             select: 'personal_info.username personal_info.profile_img'
         });
@@ -1205,15 +1221,14 @@ server.get('/:userId/followers', async (req, res) => {
         }
         res.status(200).json({ followers: user.followers });
     } catch (err) {
-        console.error(err);
         res.status(500).json({ message: 'Error fetching followers', error: err });
     }
 });
 
 // Get following of a user
-server.get('/:userId/following', async (req, res) => {
+server.get('/following/:username', async (req, res) => {
     try {
-        const user = await User.findById(req.params.userId).populate({
+        const user = await User.findOne({ 'personal_info.username': req.params.username }).populate({
             path: 'following',
             select: 'personal_info.username personal_info.profile_img'
         });
@@ -1222,10 +1237,10 @@ server.get('/:userId/following', async (req, res) => {
         }
         res.status(200).json({ following: user.following });
     } catch (err) {
-        console.error(err);
         res.status(500).json({ message: 'Error fetching following', error: err });
     }
 });
+
 
 
 

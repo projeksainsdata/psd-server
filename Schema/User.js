@@ -4,6 +4,7 @@ let profile_imgs_name_list = ["Garfield", "Tinkerbell", "Annie", "Loki", "Cleo",
 let profile_imgs_collections_list = ["notionists-neutral", "adventurer-neutral", "fun-emoji"];
 
 const userSchema = mongoose.Schema({
+
     personal_info: {
         fullname: {
             type: String,
@@ -33,10 +34,6 @@ const userSchema = mongoose.Schema({
             default: () => {
                 return `https://api.dicebear.com/6.x/${profile_imgs_collections_list[Math.floor(Math.random() * profile_imgs_collections_list.length)]}/svg?seed=${profile_imgs_name_list[Math.floor(Math.random() * profile_imgs_name_list.length)]}`
             } 
-        },
-        isAdmin: {
-            type: Boolean,
-            default: false,
         },
     },
     social_links: {
@@ -96,13 +93,20 @@ const userSchema = mongoose.Schema({
         type: Schema.Types.ObjectId,
         ref: 'Todo',
     }],
-    followers:[{type:Schema.Types.ObjectId,ref:"User"}],
-    following:[{type:Schema.Types.ObjectId,ref:"User"}]
+    followers:[{
+        type: Schema.Types.ObjectId,
+        ref:"users"
+    }],
+    following:[{
+        type:Schema.Types.ObjectId,
+        ref:"users"
+    }]
 },
 { 
     timestamps: {
         createdAt: 'joinedAt'
     } 
-});
+
+})
 
 export default mongoose.model("users", userSchema);
