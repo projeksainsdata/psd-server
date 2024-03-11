@@ -4,13 +4,13 @@ const followSchema = new mongoose.Schema({
     following: [
         {
           type: String,
-          default: [],
+          ref: "user",
         },
       ],
       followers: [
         {
           type: String,
-          default: [],
+          ref:"user",
         },
       ],
 });
