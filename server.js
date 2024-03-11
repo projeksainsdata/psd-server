@@ -437,7 +437,7 @@ server.post("/get-profile", (req, res) => {
     let { username } = req.body;
 
     User.findOne({ "personal_info.username": username })
-    .select("-personal_info.password -google_auth -updatedAt -blogs")
+    .select("-personal_info.password -google_auth -updatedAt -blogs ")
     .then(user => {
         return res.status(200).json(user)
     })
@@ -1154,23 +1154,38 @@ server.delete('/delete-user/:id', verifyJWT, async (req, res) => {
     }
 });
 
+server.post("/get-profile2", (req, res) => {
+    let { username } = req.body;
+
+    User.findOne({ "personal_info.username": username })
+        .select("-personal_info.password -google_auth -updatedAt -blogs")
+        .populate('followers', 'personal_info.username personal_info.profile_img')
+        .populate('following', 'personal_info.username personal_info.profile_img')
+        .then(user => {
+            return res.status(200).json(user);
+        })
+        .catch(err => {
+            console.log(err);
+            return res.status(500).json({ error: err.message });
+        });
+});
+
+
 // Follow a user
 server.post('/user/:userId/follow', async (req, res) => {
     const { userId } = req.params;
     const { followerId } = req.body;
 
     try {
-        // Add followerId to the following list of the user
+        // Add followerId to the followers list of the user being followed
         await User.findByIdAndUpdate(userId, {
-            $addToSet: { following: followerId }
+            $addToSet: { followers: followerId }
         });
 
-        // Add userId to the followers list of the followed user
+        // Add userId to the following list of the user who is following
         await User.findByIdAndUpdate(followerId, {
-            $addToSet: { followers: userId }
+            $addToSet: { following: userId }
         });
-
-        // Send a notification to the followed user (implement this according to your notification system)
 
         res.status(200).send('Followed successfully');
     } catch (error) {
@@ -1185,14 +1200,14 @@ server.post('/user/:userId/unfollow', async (req, res) => {
     const { followerId } = req.body;
 
     try {
-        // Remove followerId from the following list of the user
+        // Remove followerId from the followers list of the user being unfollowed
         await User.findByIdAndUpdate(userId, {
-            $pull: { following: followerId }
+            $pull: { followers: followerId }
         });
 
-        // Remove userId from the followers list of the unfollowed user
+        // Remove userId from the following list of the user who is unfollowing
         await User.findByIdAndUpdate(followerId, {
-            $pull: { followers: userId }
+            $pull: { following: userId }
         });
 
         res.status(200).send('Unfollowed successfully');
@@ -1201,6 +1216,7 @@ server.post('/user/:userId/unfollow', async (req, res) => {
         res.status(500).send('Error unfollowing user');
     }
 });
+
 
 // Get followers of a user
 server.get('/user/:userId/followers', async (req, res) => {
