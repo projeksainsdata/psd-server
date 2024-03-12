@@ -524,7 +524,7 @@ server.post('/create-blog', verifyJWT, (req, res) => {
     }
 
     if(!draft){
-        if(!des.length || des.length > 200){
+        if(!des.length || des.length > 500){
             return res.status(403).json({ error: "You must provide blog description under 200 characters" });
         }
     
