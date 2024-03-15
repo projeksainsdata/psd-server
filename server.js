@@ -1241,6 +1241,55 @@ server.get('/following/:username', async (req, res) => {
     }
 });
 
+server.get('/user/:username', async (req, res) => {
+    try {
+        const username = req.params.username;
+        const user = await User.findOne({ 'personal_info.username': username });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        const userData = {
+            fullname: user.personal_info.fullname,
+            username: user.personal_info.username,
+            profile_img: user.personal_info.profile_img,
+            joinedAt: user.joinedAt,
+            // Add more fields as needed
+        };
+        res.json(userData);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to fetch user data' });
+    }
+});
+
+server.get('/all-members', async (req, res) => {
+    try {
+        const members = await User.find({}).select('personal_info.username personal_info.fullname personal_info.profile_img account_info.total_posts account_info.total_reads joinedAt');
+        res.status(200).json({ users: members });
+    } catch (error) {
+        console.error('Error fetching all members:', error);
+        res.status(500).json({ message: 'Failed to fetch all members' });
+    }
+});
+
+server.post('/search-members', async (req, res) => {
+    const { query } = req.body;
+    try {
+        const regex = new RegExp(query, 'i'); // Case-insensitive regex for searching
+        const members = await User.find({
+            $or: [
+                { 'personal_info.fullname': regex },
+                { 'personal_info.username': regex }
+            ]
+        }).select('personal_info.username personal_info.fullname personal_info.profile_img account_info.total_posts account_info.total_reads joinedAt');
+
+        res.status(200).json({ users: members });
+    } catch (error) {
+        console.error('Error searching members:', error);
+        res.status(500).json({ message: 'Failed to search members' });
+    }
+});
+
 
 
 
