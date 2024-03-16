@@ -1119,37 +1119,40 @@ server.put("/todo/:username/note", async (req, res) => {
 
 
 
-server.delete('/delete-user/:id', verifyJWT, async (req, res) => {
+server.delete('/delete/:userId', verifyJWT, async (req, res, next) => {
     try {
-        const userId = req.params.id;
+        const userId = req.params.userId;
         const user = await User.findById(userId);
-
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        if (user.google_auth) {
-            // Handle the deletion of a user who signed up with Google
-            // For example, you might need to revoke tokens, send a notification, etc.
-            // Add your custom logic here
-            // Example: Revoke Google tokens
-            await revokeGoogleTokens(user.google_token);
-        } else {
-            // Handle the deletion of a regular user
-            await User.findByIdAndDelete(userId);
-
-            // Delete associated blogs, comments, and notifications
-            await Blog.deleteMany({ author: userId });
-            await Comment.deleteMany({ commented_by: userId });
-            await Notification.deleteMany({ $or: [{ user: userId }, { notification_for: userId }] });
+        // Periksa apakah pengguna adalah admin atau pengguna yang ingin dihapus
+        if (!req.user.isAdmin && req.user.id !== userId) {
+            return next(errorHandler(403, 'You are not allowed to delete this user'));
         }
 
-        res.status(200).json({ message: 'User deleted successfully' });
+        // Hapus notifikasi, blog, dan komentar yang terkait dengan pengguna
+        await Notification.deleteMany({ $or: [{ user: userId }, { notification_for: userId }] });
+        await Blog.deleteMany({ author: userId });
+        await Comment.deleteMany({ commented_by: userId });
+
+        // Hapus akses token Google jika pengguna login melalui Google Auth
+        if (user.google_auth) {
+            await revokeGoogleTokens(user.google_token);
+        }
+
+        // Hapus pengguna
+        await User.findByIdAndDelete(userId);
+
+        res.status(200).json('User has been deleted');
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Failed to delete user' });
+        next(error);
     }
 });
+
+
+
 
 server.post("/get-profile2", (req, res) => {
     let { username } = req.body;
