@@ -9,6 +9,7 @@ import admin from "firebase-admin";
 import serviceAccountKey from "./projeksainsdata-2b30f-firebase-adminsdk-do07o-bf71fd0a5b.json" assert { type: "json" };
 import { getAuth } from "firebase-admin/auth";
 import aws from "aws-sdk";
+import { google } from 'googleapis';
 
 
 
@@ -117,6 +118,18 @@ const generateUsername = async (email) => {
     return username;
 
 }
+
+
+const revokeGoogleTokens = async (accessToken) => {
+    try {
+        const OAuth2Client = new google.auth.OAuth2();
+        await OAuth2Client.revokeToken(accessToken);
+        console.log('Google tokens revoked successfully');
+    } catch (error) {
+        console.error('Failed to revoke Google tokens:', error.message);
+        throw error;
+    }
+};
 
 // upload image url route
 server.get('/get-upload-url', (req, res) => {
