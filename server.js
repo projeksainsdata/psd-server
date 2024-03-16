@@ -1119,37 +1119,41 @@ server.put("/todo/:username/note", async (req, res) => {
 
 
 
-server.delete('/delete/:userId', verifyJWT, async (req, res, next) => {
+server.delete('/delete-user/:username', verifyJWT, async (req, res, next) => {
     try {
-        const userId = req.params.userId;
-        const user = await User.findById(userId);
+        const username = req.params.username;
+        const user = await User.findOne({ "personal_info.username": username });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Periksa apakah pengguna adalah admin atau pengguna yang ingin dihapus
-        if (!req.user.isAdmin && req.user.id !== userId) {
+        // Check if the user is an admin or the user being deleted
+        if (!req.user.isAdmin && req.user._id && user._id && req.user._id.toString() !== user._id.toString()) {
             return next(errorHandler(403, 'You are not allowed to delete this user'));
         }
 
-        // Hapus notifikasi, blog, dan komentar yang terkait dengan pengguna
-        await Notification.deleteMany({ $or: [{ user: userId }, { notification_for: userId }] });
-        await Blog.deleteMany({ author: userId });
-        await Comment.deleteMany({ commented_by: userId });
+        // Delete related data (notifications, blogs, comments, etc.)
+        await Notification.deleteMany({ user: user._id });
+        await Blog.deleteMany({ author: user._id });
+        await Comment.deleteMany({ commented_by: user._id });
 
-        // Hapus akses token Google jika pengguna login melalui Google Auth
+        // If the user has logged in with Google Auth, revoke their tokens
         if (user.google_auth) {
             await revokeGoogleTokens(user.google_token);
         }
 
-        // Hapus pengguna
-        await User.findByIdAndDelete(userId);
+        // Delete the user
+        await User.findByIdAndDelete(user._id);
 
-        res.status(200).json('User has been deleted');
+        res.status(200).json({ message: 'User has been deleted' });
     } catch (error) {
         next(error);
     }
 });
+
+
+
+
 
 
 
