@@ -50,6 +50,10 @@ const blogSchema = mongoose.Schema({
             type: Number,
             default: 0
         },
+        total_saved: {
+            type: Number,
+            default: 0
+        }
     },
     comments: {
         type: [Schema.Types.ObjectId],
@@ -58,7 +62,11 @@ const blogSchema = mongoose.Schema({
     draft: {
         type: Boolean,
         default: false
-    }
+    },
+    bookmarks: [{
+        type: Schema.Types.ObjectId,
+        ref: 'blogs'
+    }]
 
 }, 
 { 

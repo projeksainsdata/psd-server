@@ -104,6 +104,10 @@ const userSchema = new mongoose.Schema({
     following:[{
         type:Schema.Types.ObjectId,
         ref:"users"
+    }],
+    bookmarks: [{
+        type: Schema.Types.ObjectId,
+        ref: 'blogs'
     }]
 },
 { 

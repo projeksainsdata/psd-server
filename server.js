@@ -21,6 +21,7 @@ import Notification from "./Schema/Notification.js";
 import Comment from "./Schema/Comment.js";
 import ToDo from './Schema/ToDo.js';
 import Notepad from './Schema/Notepad.js';
+import SavedBlog from './Schema/SavedBlog.js';
 
 const server = express();
 let PORT = 3000;
@@ -1309,6 +1310,96 @@ server.post('/search-members', async (req, res) => {
         res.status(500).json({ message: 'Failed to search members' });
     }
 });
+
+server.post("/bookmark-blog", verifyJWT, async (req, res) => {
+    const user_id = req.user;
+    const { _id, issavedByUser } = req.body;
+
+    const incrementVal = !issavedByUser ? 1 : -1;
+
+    // Update the user's bookmarks array based on the bookmark action
+    const updateQuery = !issavedByUser ? { $addToSet: { bookmarks: _id } } : { $pull: { bookmarks: _id } };
+
+    try {
+        // Update the user document
+        await User.findByIdAndUpdate(user_id, updateQuery);
+
+        // Update the blog's total_saved count
+        await Blog.findByIdAndUpdate(_id, { $inc: { "activity.total_saved": incrementVal } });
+
+        // Find the blog to access the author
+        const blog = await Blog.findById(_id);
+
+        if (!blog) {
+            throw new Error("Blog not found");
+        }
+
+        if (!issavedByUser) {
+            // Create a new notification
+            const save = new Notification({
+                type: "saved",
+                blog: _id,
+                notification_for: blog.author,
+                user: user_id
+            });
+            await save.save();
+            res.status(200).json({ saved_by_user: true });
+        } else {
+            // Delete the notification
+            await Notification.findOneAndDelete({ user: user_id, blog: _id, type: "saved" });
+            res.status(200).json({ saved_by_user: false });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
+
+
+server.post("/issaved-by-user", verifyJWT, (req, res) => {
+    let user_id = req.user;
+
+    let { _id } = req.body;
+
+    Notification.exists({ user: user_id, type: "saved", blog: _id })
+    .then(result => {
+        return res.status(200).json({ result }) 
+    })
+    .catch(err => {
+        return res.status(500).json({ error: err.message })
+    })
+
+}) 
+
+server.get("/user-bookmarks/:username", (req, res) => {
+    const username = req.params.username;
+
+    User.findOne({ "personal_info.username": username })
+        .populate("bookmarks", "title des blog_id") // Menampilkan field "title", "des", dan "blog_id" dari blog
+        .then(user => {
+            if (!user) {
+                return res.status(404).json({ error: "User not found" });
+            }
+
+            // Mengubah format data bookmarks untuk menyertakan title, des, dan blog_id
+            const formattedBookmarks = user.bookmarks.map(bookmark => {
+                return {
+                    _id: bookmark._id,
+                    title: bookmark.title,
+                    des: bookmark.des,
+                    blog_id: bookmark.blog_id
+                };
+            });
+
+            res.status(200).json({ bookmarks: formattedBookmarks });
+        })
+        .catch(err => {
+            res.status(500).json({ error: err.message });
+        });
+});
+
+
 
 
 
