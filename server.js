@@ -33,8 +33,15 @@ admin.initializeApp({
 let emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/; // regex for email
 let passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/; // regex for password
 
+const corsOptions = {
+    origin: 'https://projeksainsdata.com', // Ganti dengan domain yang diizinkan
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Metode HTTP yang diizinkan
+    allowedHeaders: ['Content-Type', 'Authorization'], // Header yang diizinkan
+    credentials: true, // Mengizinkan pengiriman cookies
+};
+
 server.use(express.json());
-server.use(cors())
+server.use(cors(corsOptions))
 
 mongoose.connect(process.env.DB_LOCATION, {
     autoIndex: true
